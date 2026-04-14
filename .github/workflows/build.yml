@@ -22,7 +22,7 @@ jobs:
       - name: Extrair projeto
         run: |
           unzip -o TouchGuard.zip -d TouchGuard
-          echo "=== Arquivos extraidos ==="
+          echo "=== Raiz ==="
           ls TouchGuard/
           echo "=== app/ ==="
           ls TouchGuard/app/
@@ -48,12 +48,11 @@ jobs:
           GRADLE_FILE="TouchGuard/app/build.gradle"
           sed -i "s/versionCode [0-9]*/versionCode ${{ steps.versao.outputs.VERSION_CODE }}/" $GRADLE_FILE
           sed -i "s/versionName \"[^\"]*\"/versionName \"${{ steps.versao.outputs.VERSION_NAME }}\"/" $GRADLE_FILE
-          grep -E "versionCode|versionName" $GRADLE_FILE
 
       - name: Build Debug APK
         run: |
           cd TouchGuard
-          ./gradlew assembleDebug --stacktrace 2>&1
+          ./gradlew :app:assembleDebug --stacktrace
 
       - name: Renomear APK com versão
         run: |
