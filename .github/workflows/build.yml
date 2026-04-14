@@ -16,15 +16,20 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '11'
           distribution: 'temurin'
 
       - name: Extrair projeto
-        run: unzip -o TouchGuard.zip -d TouchGuard
+        run: |
+          unzip -o TouchGuard.zip -d TouchGuard
+          echo "=== Arquivos extraidos ==="
+          ls TouchGuard/
+          echo "=== app/ ==="
+          ls TouchGuard/app/
 
       - name: Baixar gradle-wrapper.jar
         run: |
-          curl -sL "https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar" \
+          curl -sL "https://github.com/gradle/gradle/raw/v7.5.0/gradle/wrapper/gradle-wrapper.jar" \
             -o TouchGuard/gradle/wrapper/gradle-wrapper.jar
 
       - name: Make gradlew executable
@@ -37,31 +42,24 @@ jobs:
           VERSION_NAME="1.0.${VERSION_CODE}"
           echo "VERSION_CODE=${VERSION_CODE}" >> $GITHUB_OUTPUT
           echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_OUTPUT
-          echo "versionCode: ${VERSION_CODE}"
-          echo "versionName: ${VERSION_NAME}"
 
       - name: Injetar versão no build.gradle
         run: |
           GRADLE_FILE="TouchGuard/app/build.gradle"
-          VERSION_CODE=${{ steps.versao.outputs.VERSION_CODE }}
-          VERSION_NAME=${{ steps.versao.outputs.VERSION_NAME }}
-          sed -i "s/versionCode [0-9]*/versionCode ${VERSION_CODE}/" $GRADLE_FILE
-          sed -i "s/versionName \"[^\"]*\"/versionName \"${VERSION_NAME}\"/" $GRADLE_FILE
-          echo "=== build.gradle atualizado ==="
+          sed -i "s/versionCode [0-9]*/versionCode ${{ steps.versao.outputs.VERSION_CODE }}/" $GRADLE_FILE
+          sed -i "s/versionName \"[^\"]*\"/versionName \"${{ steps.versao.outputs.VERSION_NAME }}\"/" $GRADLE_FILE
           grep -E "versionCode|versionName" $GRADLE_FILE
 
       - name: Build Debug APK
         run: |
           cd TouchGuard
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --stacktrace 2>&1
 
       - name: Renomear APK com versão
         run: |
           VERSION_NAME=${{ steps.versao.outputs.VERSION_NAME }}
           cp TouchGuard/app/build/outputs/apk/debug/app-debug.apk \
              TouchGuard/app/build/outputs/apk/debug/TouchGuard-${VERSION_NAME}.apk
-          echo "APK: TouchGuard-${VERSION_NAME}.apk"
-          du -h TouchGuard/app/build/outputs/apk/debug/TouchGuard-${VERSION_NAME}.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
